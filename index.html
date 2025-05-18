@@ -1,139 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SatGuesser</title>
-
-  <!-- Leaflet and MapTiler CSS -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SatGuesser [Alpha]</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.maptiler.com/maptiler-sdk-js/v3.0.1/maptiler-sdk.css" />
-
-  <!-- Leaflet and MapTiler JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdn.maptiler.com/maptiler-sdk-js/v3.0.1/maptiler-sdk.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/4.0.0/seedrandom.min.js"></script>
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.js" crossorigin="anonymous"></script>
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
+    html, body { margin: 0; padding: 0; height: 100%; }
+    #map { position: relative; height: 100%; width: 100%; overflow: hidden; }
+    #guessMapCanvas, #resultMapCanvas, #finalMapCanvas {
+      height: 80vh; width: 80vw; border-radius: 20px;
     }
-
-    /* Main map container */
-    #map {
-      position: relative;
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-    }
-
-    /* Map shown in guess phase */
-    #map2 {
-      height: 80vh;
-      width: 80vw;
-      border-radius: 20px;
-    }
-
-    #map3 {
-      height: 80vh;
-      width: 80vw;
-      border-radius: 20px;
-    }
-
-    /* Generic overlay style */
     .overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      z-index: 999;
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center;
+      align-items: center; font-family: Arial, sans-serif; color: white; z-index: 999;
     }
-
-    /* Game title */
-    .game-title {
-      font-size: 3rem;
-      font-weight: bold;
-      margin-bottom: 20px;
-    }
-
-    /* Input field */
+    .menu-container { display: flex; flex-direction: column; align-items: center; gap: 20px; text-align: center; }
+    .title { font-size: 3rem; font-weight: bold; }
     .input-field {
-      padding: 10px;
-      margin-bottom: 20px;
-      font-size: 1.2rem;
-      border-radius: 10px;
-      border: 2px solid #fff;
-      background-color: rgba(255, 255, 255, 0.8);
-      color: #333;
+      padding: 10px; font-size: 1.2rem; border-radius: 10px; border: 2px solid #fff;
+      background: rgba(255, 255, 255, 0.8); color: #333; max-width: 200px;
     }
-
-    /* Buttons */
-    .start-button, .guess-button {
-      padding: 10px 20px;
-      font-size: 1.2rem;
-      color: #fff;
-      background-color: #4CAF50;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: background-color 0.3s;
+    .label { font-size: 1.1rem; margin-top: 10px; }
+    .radio-group { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+    .radio-option {
+      position: relative; padding-left: 35px; cursor: pointer; font-size: 1.2rem; color: white;
     }
-
-    .start-button:hover, .guess-button:hover {
-      background-color: #45a049;
+    .radio-option input[type="radio"] { display: none; }
+    .custom-radio {
+      position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      height: 20px; width: 20px; background: rgba(255,255,255,0.8);
+      border: 2px solid white; border-radius: 50%;
     }
-
-    /* Guess button specific positioning */
-    .guess-button {
-      display: none;
-      position: absolute;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 999;
+    .radio-option input[type="radio"]:checked + .custom-radio {
+      background: #4CAF50; box-shadow: 0 0 0 4px rgba(76,175,80,0.3);
     }
+    .button {
+      padding: 10px 20px; font-size: 1.2rem; color: white;
+      background: #4CAF50; border: none; border-radius: 10px; cursor: pointer;
+    }
+    .button:hover { background: #45a049; }
+    .button-row {
+      display: flex; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+      z-index: 999; gap: 150px; justify-content: center; margin-top: 20px;
+    }
+    img.huechange { filter: hue-rotate(150deg); }
   </style>
 </head>
-
 <body>
-
-  <!-- Map container -->
   <div id="map">
-    <!-- Guess button inside the map -->
-    <button class="guess-button" id="guessButton" onclick="guess()">Guess</button>
+    <div class="button-row" id="guessButtons" style="display: none;">
+      <button class="button" onclick="save()">Save</button>
+      <button class="button" onclick="guess()">Guess</button>
+    </div>
   </div>
 
-  <!-- Main menu overlay -->
+  <!-- Menu Overlay -->
   <div class="overlay" id="mainMenu">
-    <div class="game-title">SatGuesser</div>
-    <input type="text" class="input-field" id="seedInput" placeholder="Enter Seed" />
-    <button class="start-button" onclick="startGame()">Start Game</button>
+    <div class="menu-container">
+      <div class="title">SatGuesser [Alpha]</div>
+      <label class="label" for="seedInput">Seed:</label>
+      <input type="text" class="input-field" id="seedInput" placeholder="Leave blank for random" />
+      <label class="label">Zoom level:</label>
+      <div class="radio-group">
+        <label class="radio-option"><input type="radio" name="zoomLevel" value="far"><span class="custom-radio"></span>Far</label>
+        <label class="radio-option"><input type="radio" name="zoomLevel" value="medium" checked><span class="custom-radio"></span>Medium</label>
+        <label class="radio-option"><input type="radio" name="zoomLevel" value="close"><span class="custom-radio"></span>Close</label>
+      </div>
+      <button class="button" id="startBtn" onclick="startGame()" disabled>Loading...</button>
+    </div>
   </div>
 
-  <!-- Guessing overlay -->
-  <div class="overlay" id="guessMap" style="display: none;">
-    <div id="map2"></div>
-    <button class="start-button" onclick="confirmGuess()">Confirm</button>
+  <!-- Overlays -->
+  <div class="overlay" id="guessOverlay" style="display: none;">
+    <div class="menu-container">
+      <div id="guessMapCanvas"></div>
+      <div class="button-row">
+        <button class="button" onclick="cancel()">Cancel</button>
+        <button class="button" onclick="confirmGuess()">Confirm</button>
+      </div>
+    </div>
   </div>
 
-  <!-- Results overlay -->
-  <div class="overlay" id="resultMap" style="display: none;">
-    <div id="map3"></div>
-    <button class="start-button" onclick="continueGame()">Continue</button>
+  <div class="overlay" id="resultOverlay" style="display: none;">
+    <div class="menu-container">
+      <div id="resultMapCanvas"></div>
+      <p id="dist">Distance:</p>
+      <button class="button" onclick="continueGame()">Continue</button>
+    </div>
   </div>
 
-  <script src="script.js"></script>
+  <div class="overlay" id="finalOverlay" style="display: none;">
+    <div class="menu-container">
+      <div id="finalMapCanvas"></div>
+      <p id="findist">Average Distance:</p>
+      <button class="button" onclick="returnMenu()">Back to Menu</button>
+    </div>
+  </div>
 
+  <script src="jannet.js"></script> <!-- Use the minified JS you'll get next -->
 </body>
 </html>
