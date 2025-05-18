@@ -92,7 +92,17 @@ const capitalLandmarks = [
   
     GameState.locations = Array.from({ length: GameConfig.roundCount }, (_, i) => {
       const rng = new Math.seedrandom(GameConfig.seed + i);
-      return cityData[Math.floor(rng() * cityData.length)];
+
+      // Step 1: Filter the city list based on requirements
+      const candidates = cityData.filter(city => {
+        return (
+          city.pop > 100000
+          // add more checks as needed
+        );
+      });
+
+      // Step 2: Select one at random from the filtered list
+      return candidates[Math.floor(rng() * candidates.length)];
     });
   
     GameState.round = 0;
