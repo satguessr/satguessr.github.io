@@ -8,49 +8,165 @@
   <link rel="stylesheet" href="https://cdn.maptiler.com/maptiler-sdk-js/v3.0.1/maptiler-sdk.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.1.js" crossorigin="anonymous"></script>
   <style>
-    html, body { margin: 0; padding: 0; height: 100%; }
-    #map { position: relative; height: 100%; width: 100%; overflow: hidden; }
-    #guessMapCanvas, #resultMapCanvas, #finalMapCanvas {
-      height: 80vh; width: 80vw; border-radius: 20px;
+    /* Base Reset */
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
     }
+
+    /* Map Container */
+    #map {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Map Canvases */
+    #guessMapCanvas,
+    #resultMapCanvas,
+    #finalMapCanvas {
+      width: 80vw;
+      height: 80vh;
+      border-radius: 20px;
+    }
+
+    /* Overlay Styling */
     .overlay {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center;
-      align-items: center; font-family: Arial, sans-serif; color: white; z-index: 999;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: top;
+      font-family: Arial, sans-serif;
+      color: white;
+      z-index: 999;
+      
     }
-    .menu-container { display: flex; flex-direction: column; align-items: center; gap: 20px; text-align: center; }
-    .title { font-size: 3rem; font-weight: bold; }
+
+    /* Menu Container */
+    .menu-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      padding: 2%;
+      text-align: center;
+    }
+
+    /* Menu Container */
+    .menu-container2 {
+      display: flex;
+      flex-direction: column;
+      align-items: top;
+      justify-content: top;
+      gap: 20px;
+      padding: 2%;
+      text-align: center;
+    }
+
+    /* Title */
+    .title {
+      font-size: 3rem;
+      font-weight: bold;
+    }
+
+    /* Input Field */
     .input-field {
-      padding: 10px; font-size: 1.2rem; border-radius: 10px; border: 2px solid #fff;
-      background: rgba(255, 255, 255, 0.8); color: #333; max-width: 200px;
+      max-width: 200px;
+      padding: 10px;
+      font-size: 1.2rem;
+      border-radius: 10px;
+      border: 2px solid #fff;
+      background: rgba(255, 255, 255, 0.8);
+      color: #333;
     }
-    .label { font-size: 1.1rem; margin-top: 10px; }
-    .radio-group { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+
+    /* Label */
+    .label {
+      font-size: 1.1rem;
+      margin-top: 10px;
+    }
+
+    /* Radio Group */
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
     .radio-option {
-      position: relative; padding-left: 35px; cursor: pointer; font-size: 1.2rem; color: white;
+      position: relative;
+      padding-left: 35px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      color: white;
     }
-    .radio-option input[type="radio"] { display: none; }
+
+    .radio-option input[type="radio"] {
+      display: none;
+    }
+
     .custom-radio {
-      position: absolute; left: 0; top: 50%; transform: translateY(-50%);
-      height: 20px; width: 20px; background: rgba(255,255,255,0.8);
-      border: 2px solid white; border-radius: 50%;
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.8);
+      border: 2px solid white;
+      border-radius: 50%;
     }
+
     .radio-option input[type="radio"]:checked + .custom-radio {
-      background: #4CAF50; box-shadow: 0 0 0 4px rgba(76,175,80,0.3);
+      background: #4CAF50;
+      box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.3);
     }
+
+    /* Button */
     .button {
-      padding: 10px 20px; font-size: 1.2rem; color: white;
-      background: #4CAF50; border: none; border-radius: 10px; cursor: pointer;
+      padding: 10px 20px;
+      font-size: 1.2rem;
+      color: white;
+      background: #4CAF50;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
     }
-    .button:hover { background: #45a049; }
+
+    .button:hover {
+      background: #45a049;
+    }
+
+    /* Button Row */
     .button-row {
-      display: flex; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-      z-index: 999; gap: 150px; justify-content: center; margin-top: 20px;
+      display: flex;
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      gap: 150px;
+      justify-content: center;
+      margin-top: 20px;
     }
-    img.huechange { filter: hue-rotate(150deg); }
+
+    /* Image Filter */
+    img.huechange {
+      filter: hue-rotate(150deg);
+    }
   </style>
+
 </head>
 <body>
   <div id="map">
@@ -78,7 +194,7 @@
 
   <!-- Overlays -->
   <div class="overlay" id="guessOverlay" style="display: none;">
-    <div class="menu-container">
+    <div class="menu-container2">
       <div id="guessMapCanvas"></div>
       <div class="button-row">
         <button class="button" onclick="cancel()">Cancel</button>
