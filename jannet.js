@@ -30,7 +30,7 @@ let startScreenCapital = capitalLandmarks[Math.floor(Math.random() * capitalLand
 // Game data and config
 let cityData = null;
 let landData = null;
-const GameConfig = { seed: '', zoom: 13, roundCount: 5 };
+const GameConfig = { seed: '', zoom: 9, roundCount: 5 };
 const GameState = { round: 0, locations: [], guesses: [], distances: [] };
 
 // === Load city data and enable start button ===
@@ -62,7 +62,7 @@ $seedInput.on('input', function () {
 // === Zoom level radio buttons logic using jQuery ===
 $('input[name="zoomLevel"]').on('change', function () {
   const zoomLevels = { far: 9, medium: 13, close: 16 };
-  GameConfig.zoom = zoomLevels[this.value] || 13;
+  GameConfig.zoom = zoomLevels[this.value] || 9;
   SatMap.setView(startScreenCapital, GameConfig.zoom);
   console.log(`Selected mode: ${this.value}`);
 });
@@ -94,18 +94,29 @@ function showOnly(ids) {
   elements.forEach(id => $('#' + id).css('display', ids.includes(id) ? 'flex' : 'none'));
 }
 
+// === Biased RNG === 
+function centerBiased(seed, power = 2) {
+  const rng = new Math.seedrandom(seed);
+  const r = Math.pow(rng(), power);
+  const sign = rng() < 0.5 ? -1 : 1;
+  return sign * r;
+}
+
 // === Generate Point on Land === 
 function tryGen(seed, recurseIndex) {
-  const lonmax = 180;
-  const lonmin = -180;
-  const lon = new Math.seedrandom(seed+recurseIndex+"lon")() * (lonmax - lonmin + 1) + lonmin;
-
-  const latmax = 72;
   const latmin = -55;
-  const lat = new Math.seedrandom(seed+recurseIndex+"lon")() * (latmax - latmin + 1) + latmin;
+  const latmax = 72;
+  const lonmin = -180;
+  const lonmax = 180;
 
-  console.log(new Math.seedrandom(seed+recurseIndex+"lon")());
-  console.log(lon, lat);
+  const latMid = (latmin + latmax) / 2;
+  const latRange = (latmax - latmin) / 2;
+
+  const lonMid = (lonmin + lonmax) / 2;
+  const lonRange = (lonmax - lonmin) / 2;
+
+  const lat = latMid + centerBiased(seed + recurseIndex + "lat", 2) * latRange;
+  const lon = lonMid + centerBiased(seed + recurseIndex + "lon", 2) * lonRange;
 
   const point = turf.point([lon, lat]);
   const isOnLand = landData.features.some(feature =>
@@ -131,13 +142,10 @@ function startGame() {
   GameState.locations = Array.from({ length: GameConfig.roundCount }, (_, i) => {
     if(new Math.seedrandom(GameConfig.seed+i+"decide")() < 0.6){
       //World Gen
-      console.log("WorldGen");
-
       return tryGen(GameConfig.seed+i, 0);
     }
     else{
       //City Gen
-      console.log("CityGen");
       const rng = new Math.seedrandom(GameConfig.seed + i);
 
       const candidates = cityData.filter(city => {
@@ -149,15 +157,13 @@ function startGame() {
       return candidates[Math.floor(rng() * candidates.length)];
     }
   });
-
-  console.log(GameState.locations);
   GameState.round = 0;
   SatMap.setView([parseFloat(GameState.locations[0].lat), parseFloat(GameState.locations[0].lon)], GameConfig.zoom);
   showOnly(["guessButtons"]);
   clearMarkers();
 }
 
-// === Guess overlay logic ===
+// === Guess overlay ===
 function guess() {
   showOnly(["guessOverlay"]);
   setTimeout(() => GuessMap.invalidateSize(), 100);
@@ -253,7 +259,7 @@ function results() {
 
   clearMarkers();
 
-  // Show all guesses, correct locations, and polylines
+  // Show all guesses, correct locations, and connecting lines
   for (let i = 0; i < GameConfig.roundCount; i++) {
     markers.push(L.marker(GameState.guesses[i]).addTo(FinalMap).bindPopup(`Your guess round ${i + 1}`));
 

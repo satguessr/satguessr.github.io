@@ -10,12 +10,17 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.1.js" crossorigin="anonymous"></script>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.css"
+  />
   <style>
     /* Base Reset */
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
+      font-family: 'Comic Sans MS', 'Comic Sans', cursive;
     }
 
     /* Map Container */
@@ -46,7 +51,6 @@
       display: flex;
       justify-content: center;
       align-items: top;
-      font-family: Arial, sans-serif;
       color: white;
       z-index: 999;
       
@@ -82,8 +86,9 @@
     /* Input Field */
     .input-field {
       max-width: 200px;
+      font-family: 'Comic Sans MS', 'Comic Sans', cursive;
       padding: 10px;
-      font-size: 1.2rem;
+      font-size: 1rem;
       border-radius: 10px;
       border: 2px solid #fff;
       background: rgba(255, 255, 255, 0.8);
@@ -137,6 +142,7 @@
     .button {
       padding: 10px 20px;
       font-size: 1.2rem;
+      font-family: 'Comic Sans MS', 'Comic Sans', cursive;
       color: white;
       background: #4CAF50;
       border: none;
@@ -182,17 +188,17 @@
 
   <!-- Menu Overlay -->
   <div class="overlay" id="mainMenu">
-    <div class="menu-container">
+    <div class="menu-container animate__animated animate__backInDown">
       <img class="titlelogo" src="satguessr.png">
       <label class="label" for="seedInput">Seed:</label>
       <input type="text" class="input-field" id="seedInput" placeholder="Leave blank for random" />
       <label class="label">Zoom level:</label>
       <div class="radio-group">
-        <label class="radio-option"><input type="radio" name="zoomLevel" value="far"><span class="custom-radio"></span>Far</label>
-        <label class="radio-option"><input type="radio" name="zoomLevel" value="medium" checked><span class="custom-radio"></span>Medium</label>
+        <label class="radio-option"><input type="radio" name="zoomLevel" value="far" checked><span class="custom-radio"></span>Far</label>
+        <label class="radio-option"><input type="radio" name="zoomLevel" value="medium"><span class="custom-radio"></span>Medium</label>
         <label class="radio-option"><input type="radio" name="zoomLevel" value="close"><span class="custom-radio"></span>Close</label>
       </div>
-      <button class="button" id="startBtn" onclick="startGame()" disabled>Loading...</button>
+      <button class="button animate__animated animate__bounce animate__delay-1s" id="startBtn" onclick="startGame()" disabled>Loading...</button>
     </div>
   </div>
 
